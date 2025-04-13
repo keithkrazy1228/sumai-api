@@ -4,7 +4,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import time
 
-def get_customer_info(url):  # Zapierから送られるurlは無視してOK
+def get_customer_info(url):
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
@@ -15,15 +15,14 @@ def get_customer_info(url):  # Zapierから送られるurlは無視してOK
     driver = webdriver.Chrome(service=service, options=options)
 
     try:
-        # ✅ 軽いテスト用サイトを開く
         driver.get("https://httpbin.org/html")
-        time.sleep(2)  # ページ描画待ち
+        time.sleep(2)
 
-        # ✅ HTMLの冒頭をログ出力（Renderのログで確認用）
+        # 🔽 HTML冒頭をログ出力（Render側）
         print("📸 URL:", driver.current_url)
         print("🧱 HTML冒頭:", driver.page_source[:1000])
 
-        # ✅ Zapierにも返す（中身が見られる）
+        # ZapierにHTMLを返す
         return {"html": driver.page_source}
 
     except Exception as e:
