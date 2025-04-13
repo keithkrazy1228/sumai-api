@@ -3,6 +3,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import os
 import time
 
@@ -45,6 +47,10 @@ def get_customer_info():
         # ✅ 顧客情報ページへ遷移
         driver.get(url)
         time.sleep(2)
+
+        # ✅ デバッグ用：現在のURLとHTMLの先頭をログ出力
+        print("\U0001F4F8 現在のURL:", driver.current_url)
+        print("\U0001F9F1 HTMLの最初:", driver.page_source[:1000])
 
         # ✅ 情報抽出（必要に応じて修正可能）
         name = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[1]/td').text
