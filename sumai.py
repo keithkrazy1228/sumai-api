@@ -4,9 +4,8 @@ from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
+# ✅ すまいステップのログイン情報（固定値として直接記述）
 LOGIN_URL = "https://sumai-step.com/partner/login"
-ID = "kenou-akimoto@a2gjpn.co.jp"
-PASSWORD = "kenouestate2024"
 
 @app.route('/')
 def home():
@@ -20,9 +19,10 @@ def get_customer_info():
         if not url:
             return jsonify({"error": "Missing 'url' in request"}), 400
 
+        # ✅ セッション開始
         session = requests.Session()
 
-        # Step 1: GET login page to fetch authenticity_token
+        # ✅ Step 1: ログインページから CSRFトークン取得
         resp = session.get(LOGIN_URL)
         soup = BeautifulSoup(resp.text, "html.parser")
         token_input = soup.find("input", {"name": "authenticity_token"})
@@ -35,22 +35,23 @@ def get_customer_info():
             "Content-Type": "application/x-www-form-urlencoded"
         }
 
+        # ✅ ID・パスワードをここにベタ書き（指示通り）
         payload = {
-            "partner[email]": ID,
-            "partner[password]": PASSWORD,
+            "partner[email]": "kenou-akimoto@a2gjpn.co.jp",
+            "partner[password]": "kenouestate2024",
             "authenticity_token": token
         }
 
-        # Step 2: POST login form
+        # ✅ Step 2: ログインPOST送信
         resp_login = session.post(LOGIN_URL, data=payload, headers=headers)
         if "ログインしてください" in resp_login.text:
             return jsonify({"error": "Login failed."}), 401
 
-        # Step 3: GET customer page
+        # ✅ Step 3: 顧客詳細ページ取得
         resp_detail = session.get(url)
         soup = BeautifulSoup(resp_detail.text, "html.parser")
 
-        # Step 4: Extract data
+        # ✅ Step 4: データ抽出（name / address / tel）
         try:
             rows = soup.select("#conversion_detail table tr")
             name = rows[0].select_one("td").text.strip()
@@ -68,5 +69,6 @@ def get_customer_info():
     except Exception as e:
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
 
+# ✅ Render用のポートでFlask起動
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
