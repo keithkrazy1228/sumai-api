@@ -1,81 +1,53 @@
-from flask import Flask, request, jsonify
-import requests
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+import time
 
-app = Flask(__name__)
+# ✅ ChromeDriverのパス（kenouさんの環境に合わせて指定済）
+service = Service("C:/Users/kenou/Dropbox/PC/Documents/Ctools/chromedriver.exe")
 
-# すまいステップのログインURL
-LOGIN_URL = "https://sumai-step.com/partner/login"
-ID = "kenou-akimoto@a2gjpn.co.jp"
-PASSWORD = "kenouestate2024"
+# ✅ ヘッドレスChrome起動オプション
+options = Options()
+options.add_argument('--headless')  # ←必要ならコメントアウトで画面表示可
+options.add_argument('--disable-gpu')
+options.add_argument('--no-sandbox')
 
-@app.route('/')
-def home():
-    return "Sumai Step BS API is live!"
+# ✅ Chrome起動
+driver = webdriver.Chrome(service=service, options=options)
 
-@app.route('/api/get_customer_info', methods=['POST'])
-def get_customer_info():
-    try:
-        data = request.get_json()
-        url = data.get("url")
-        if not url:
-            return jsonify({"error": "Missing 'url' in request"}), 400
+try:
+    # ① ログインページにアクセス
+    driver.get("https://sumai-step.com/partner/login")
+    time.sleep(2)
 
-        # セッション開始
-        session = requests.Session()
+    # ② ログイン情報入力
+    driver.find_element(By.ID, "partner_email").send_keys("kenou-akimoto@a2gjpn.co.jp")
+    driver.find_element(By.ID, "partner_password").send_keys("kenouestate2024")
+    driver.find_element(By.NAME, "commit").click()
+    time.sleep(3)
 
-        # Step 1: CSRFトークン取得
-        resp = session.get(LOGIN_URL)
-        soup = BeautifulSoup(resp.text, "html.parser")
-        token_input = soup.find("input", {"name": "authenticity_token"})
-        token = token_input.get("value") if token_input else ""
+    # ③ 反響一覧ページへ移動
+    driver.get("https://sumai-step.com/partner/conversions")
+    time.sleep(3)
 
-        headers = {
-            "Referer": LOGIN_URL,
-            "Origin": "https://sumai-step.com",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
+    # ④ 一番上の反響リンク（反響日時）をクリック
+    first_link = driver.find_element(By.CSS_SELECTOR, "table tbody tr td a")
+    first_link.click()
+    time.sleep(3)
 
-       payload = {
-    "partner[email]": "kenou-akimoto@a2gjpn.co.jp",
-    "partner[password]": "kenouestate2024",
-    "authenticity_token": token
-}
+    # ⑤ 顧客詳細ページのHTMLを確認（省略可）
+    html = driver.page_source
+    print("✅ 顧客詳細ページにアクセス成功！")
 
-        # Step 2: ログイン
-        resp_login = session.post(LOGIN_URL, data=payload, headers=headers)
-        if "ログインしてください" in resp_login.text:
-            return jsonify({"error": "Login failed."}), 401
+    # ⑥ 顧客情報のラベルと値を取得して表示
+    labels = driver.find_elements(By.CLASS_NAME, "assessment-request__label")
+    values = driver.find_elements(By.CLASS_NAME, "assessment-request__value")
 
-        # Step 3: 顧客情報ページ取得
-        resp_detail = session.get(url)
-        soup = BeautifulSoup(resp_detail.text, "html.parser")
+    print("\n📋 顧客情報一覧：")
+    for label, value in zip(labels, values):
+        print(f"{label.text.strip()} ： {value.text.strip()}")
 
-        # Step 4: データ抽出
-        data_map = {}
-        rows = soup.select("table tr")
-        for row in rows:
-            label_cell = row.select_one("td.assessment-request_label")
-            value_cell = row.select_one("td.assessment-request_value")
-            if label_cell and value_cell:
-                label = label_cell.text.strip()
-                value = value_cell.text.strip()
-                data_map[label] = value
-
-        result = {
-            "管理番号": data_map.get("\u7ba1\u7406\u756a\u53f7", ""),
-            "反響日時": data_map.get("\u53cd\u97ff\u65e5\u6642", ""),
-            "物件住所": data_map.get("\u7269件住所", ""),
-            "氏名": data_map.get("\u6c0f名", ""),
-            "電話番号": data_map.get("\u96fb話番号", ""),
-            "メールアドレス": data_map.get("\u30e1ールアドレス", "")
-        }
-
-        return jsonify(result)
-
-    except Exception as e:
-        return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+finally:
+    # ⑦ ブラウザを閉じる
+    driver.quit()
