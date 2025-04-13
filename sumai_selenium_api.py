@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import os
@@ -20,7 +21,7 @@ def get_customer_info():
         if not url:
             return jsonify({"error": "Missing 'url' in request"}), 400
 
-        # ✅ Selenium設定
+        # ✅ Selenium設定（Render用）
         options = Options()
         options.add_argument("--headless")
         options.add_argument("--no-sandbox")
@@ -29,14 +30,31 @@ def get_customer_info():
         service = Service("/usr/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
 
-        # ✅ テスト用の軽いURLへアクセス（ログイン不要）
+        # ✅ ログイン処理（住まいステップ）
+        driver.get("https://sumai-step.com/partner/login")
+        time.sleep(2)
+        driver.find_element(By.NAME, "partner[email]").send_keys("kenou-akimoto@a2gjpn.co.jp")
+        driver.find_element(By.NAME, "partner[password]").send_keys("kenouestate2024")
+        driver.find_element(By.NAME, "commit").click()
+        time.sleep(2)
+
+        # ✅ 顧客情報ページに遷移
         driver.get(url)
         time.sleep(2)
 
         print("📸 現在のURL:", driver.current_url)
         print("🧱 HTMLの冒頭:", driver.page_source[:1000])
 
-        return jsonify({"html": driver.page_source[:2000]})
+        # ✅ 顧客情報の抽出（XPath仮設定）※要修正する可能性あり
+        name = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[1]/td').text
+        address = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[2]/td').text
+        tel = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[3]/td').text
+
+        return jsonify({
+            "name": name,
+            "address": address,
+            "tel": tel
+        })
 
     except Exception as e:
         print("❌ ERROR:", e)
