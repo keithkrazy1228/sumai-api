@@ -37,15 +37,15 @@ def get_customer_info(url):  # Zapierから送られるURLは使わずOK
             EC.presence_of_element_located((By.TAG_NAME, "table"))  # ページ内にある何かしらの要素で待機
         )
 
-       # ✅ ページHTMLの一部をログ出力（診断用）
-print("📸 現在のURL:", driver.current_url)
-print("🧱 HTMLの最初:", driver.page_source[:1000])  # 長すぎるとRenderがカットするので1000文字でOK
+        # ✅ HTMLのログ出力（診断用）
+        print("📸 現在のURL:", driver.current_url)
+        print("🧱 HTMLの先頭:", driver.page_source[:1000])  # 長いので冒頭1000文字のみ出力
 
-# ✅ HTML全体をZapier経由で返す
-return {"html": driver.page_source}
-
+        # ✅ HTML全体をZapier側に返す（診断用）
+        return {"html": driver.page_source}
 
     except Exception as e:
+        print("❌ 例外発生:", e)
         return {"error": str(e)}
 
     finally:
