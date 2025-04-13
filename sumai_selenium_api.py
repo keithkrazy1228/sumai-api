@@ -1,11 +1,10 @@
 from flask import Flask, request, jsonify
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 import os
+import time
 
 app = Flask(__name__)
 
@@ -24,48 +23,45 @@ def get_customer_info():
         if not url:
             return jsonify({"error": "Missing 'url' in request"}), 400
 
-        property_id = url.split("/")[-1]
-
-        # ✅ ChromeDriverのRender対応構成
+        # ✅ Render環境用のSelenium設定
         options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
-        options.binary_location = "/usr/bin/chromium-browser"  # ← aptで入るChrome
-        service = Service("/usr/bin/chromedriver")             # ← aptで入るDriver
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.binary_location = "/usr/bin/chromium"  # ← ここ修正！
+
+        service = Service("/usr/bin/chromedriver")      # ← ここも修正！
+
         driver = webdriver.Chrome(service=service, options=options)
 
+        # ✅ ログインしてから対象URLへアクセス
+        driver.get("https://sumai-step.com/partner/login")
+        time.sleep(2)
+        driver.find_element(By.NAME, "partner[email]").send_keys("kenou-akimoto@a2gjpn.co.jp")
+        driver.find_element(By.NAME, "partner[password]").send_keys("kenouestate2024")
+        driver.find_element(By.NAME, "commit").click()
+        time.sleep(2)
+
+        # ✅ 顧客情報ページへ遷移
         driver.get(url)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, ".assessment-request_value"))
-        )
+        time.sleep(2)
 
-        values = driver.find_elements(By.CSS_SELECTOR, ".assessment-request_value")
-        date_received = values[0].text
-        property_address = values[3].text
-        year_built = values[7].text
-
-        applicant_info = driver.find_elements(By.CSS_SELECTOR, '.box.applicant td:nth-child(2)')
-        name = applicant_info[0].text
-        age = applicant_info[2].text
-        phone = applicant_info[3].text
-        email = applicant_info[4].text
+        # ✅ 情報抽出（必要に応じて修正可能）
+        name = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[1]/td').text
+        address = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[2]/td').text
+        tel = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[3]/td').text
 
         result = {
-            "property_id": property_id,
-            "date_received": date_received,
-            "property_address": property_address,
-            "year_built": year_built,
-            "applicant_name": name,
-            "applicant_age": age,
-            "applicant_phone": phone,
-            "applicant_email": email
+            "name": name,
+            "address": address,
+            "tel": tel
         }
 
         return jsonify(result)
 
     except Exception as e:
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
+
     finally:
         try:
             driver.quit()
