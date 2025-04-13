@@ -3,8 +3,9 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import os
-import time
 
 app = Flask(__name__)
 
@@ -14,35 +15,36 @@ def home():
 
 @app.route('/api/get_customer_info', methods=['POST'])
 def get_customer_info():
-    data = request.get_json()
-    url = data.get("url")
-    
-    if not url:
-        return jsonify({"error": "URLが見つかりません"}), 400
-
-    # 管理番号をURLから抽出
-    property_id = url.split("/")[-1]
-
-    # ✅ ChromeDriverの設定（Render環境用に修正）
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.binary_location = "/usr/bin/chromium-browser"  # ✅ Chromeの場所
-    service = Service("/usr/bin/chromedriver")             # ✅ ドライバの場所
-    driver = webdriver.Chrome(service=service, options=options)
-
     try:
-        driver.get(url)
-        time.sleep(2)
+        data = request.get_json(force=True)
+        if not data:
+            return jsonify({"error": "No JSON received"}), 400
 
-        # --- 物件情報 ---
+        url = data.get("url")
+        if not url:
+            return jsonify({"error": "Missing 'url' in request"}), 400
+
+        property_id = url.split("/")[-1]
+
+        # ChromeDriver setup
+        options = Options()
+        options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.binary_location = "/usr/bin/chromium-browser"
+        service = Service("/usr/bin/chromedriver")
+        driver = webdriver.Chrome(service=service, options=options)
+
+        driver.get(url)
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".assessment-request_value"))
+        )
+
         values = driver.find_elements(By.CSS_SELECTOR, ".assessment-request_value")
         date_received = values[0].text
         property_address = values[3].text
         year_built = values[7].text
 
-        # --- 申込者情報 ---
         applicant_info = driver.find_elements(By.CSS_SELECTOR, '.box.applicant td:nth-child(2)')
         name = applicant_info[0].text
         age = applicant_info[2].text
@@ -63,9 +65,12 @@ def get_customer_info():
         return jsonify(result)
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
     finally:
-        driver.quit()
+        try:
+            driver.quit()
+        except:
+            pass
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
