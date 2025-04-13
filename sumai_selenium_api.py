@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 import os
 import time
@@ -22,16 +23,18 @@ def get_customer_info():
     # 管理番号をURLから抽出
     property_id = url.split("/")[-1]
 
-    # ChromeDriver設定
+    # ✅ ChromeDriverの設定（Render環境用に修正）
     options = Options()
-    options.add_argument("--headless")
+    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(options=options)
+    options.binary_location = "/usr/bin/chromium-browser"  # ✅ Chromeの場所
+    service = Service("/usr/bin/chromedriver")             # ✅ ドライバの場所
+    driver = webdriver.Chrome(service=service, options=options)
 
     try:
         driver.get(url)
-        time.sleep(2)  # ページ読み込み待機
+        time.sleep(2)
 
         # --- 物件情報 ---
         values = driver.find_elements(By.CSS_SELECTOR, ".assessment-request_value")
