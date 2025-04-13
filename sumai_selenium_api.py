@@ -30,22 +30,31 @@ def get_customer_info():
         service = Service("/usr/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
 
-        # ✅ ログイン処理（住まいステップ）
+        # ✅ ログ追加①：Selenium起動確認
+        print("🟡 Selenium起動OK")
+
+        # ✅ ログ追加②：ログインページへ遷移
         driver.get("https://sumai-step.com/partner/login")
+        print("➡️ ログインページ到達:", driver.current_url)
         time.sleep(2)
+
+        # ✅ ログインフォーム入力＆送信
         driver.find_element(By.NAME, "partner[email]").send_keys("kenou-akimoto@a2gjpn.co.jp")
         driver.find_element(By.NAME, "partner[password]").send_keys("kenouestate2024")
         driver.find_element(By.NAME, "commit").click()
+        print("🔐 ログインボタン押下")
         time.sleep(2)
 
-        # ✅ 顧客情報ページに遷移
+        # ✅ 顧客ページへ遷移
         driver.get(url)
+        print("📦 顧客ページへ遷移:", driver.current_url)
         time.sleep(2)
 
+        # ✅ HTMLデバッグログ
         print("📸 現在のURL:", driver.current_url)
         print("🧱 HTMLの冒頭:", driver.page_source[:1000])
 
-        # ✅ 顧客情報の抽出（XPath仮設定）※要修正する可能性あり
+        # ✅ XPathデータ抽出（※まだ失敗する可能性あり）
         name = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[1]/td').text
         address = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[2]/td').text
         tel = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[3]/td').text
