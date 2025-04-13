@@ -26,12 +26,12 @@ def get_customer_info():
 
         property_id = url.split("/")[-1]
 
-        # ChromeDriver setup
+        # ChromeDriver setup for Render
         options = Options()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
-        options.binary_location = "/usr/bin/chromium-browser"
+        options.binary_location = "/usr/bin/google-chrome"
         service = Service("/usr/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
 
