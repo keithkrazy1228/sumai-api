@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: sumai-api
+    env: python
+    buildCommand: |
+      apt-get update && apt-get install -y chromium-browser chromium-driver
+      pip install -r requirements.txt
+    startCommand: python sumai_selenium_api.py
+    envVars:
+      - key: PORT
+        value: 10000
