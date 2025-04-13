@@ -25,10 +25,11 @@ headers = {
 
 # ログイン送信
 payload = {
-    "partner_email": ID,
-    "password": PASSWORD,
+    "partner[email]": "kenou-akimoto@a2gjpn.co.jp",
+    "partner[password]": "kenouestate2024",
     "authenticity_token": token
 }
+
 
 resp_login = session.post(LOGIN_URL, data=payload, headers=headers)
 
