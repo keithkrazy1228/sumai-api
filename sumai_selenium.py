@@ -4,50 +4,41 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
 
-def get_customer_info(url):
+def get_customer_info(url):  # Zapierから送られるURLは使わずOK
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.binary_location = "/usr/bin/chromium"  # Render用Chromeパス
+    options.binary_location = "/usr/bin/chromium"
 
-    service = Service(executable_path="/usr/bin/chromedriver")  # Render用Driverパス
+    service = Service("/usr/bin/chromedriver")
     driver = webdriver.Chrome(service=service, options=options)
 
     try:
         # ログインページへ
         driver.get("https://sumai-step.com/partner/login")
 
-        # ログインフォーム入力
+        # ログイン情報入力
         driver.find_element(By.NAME, "partner[email]").send_keys("kenou-akimoto@a2gjpn.co.jp")
         driver.find_element(By.NAME, "partner[password]").send_keys("kenouestate2024")
         driver.find_element(By.NAME, "commit").click()
 
-        # ログイン成功の確認（サイドメニューが出るまで待つ）
+        # ログイン完了待ち（目印になるメニューを探す）
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "side"))
         )
 
-        # 顧客情報ページに遷移
-        driver.get(url)
+        # 反響一覧ページへ移動（ロビー）
+        driver.get("https://sumai-step.com/partner/conversions")
 
-        # 顧客情報が表示されるまで待機
+        # ページが表示されるまで待機
         WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[1]/td'))
+            EC.presence_of_element_located((By.TAG_NAME, "table"))  # ページ内にある何かしらの要素で待機
         )
 
-        # 情報抽出
-        name = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[1]/td').text
-        address = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[2]/td').text
-        tel = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[3]/td').text
-
-        return {
-            "name": name,
-            "address": address,
-            "tel": tel
-        }
+        # ロビー写真を撮影（HTML取得）
+        return {"html": driver.page_source}
 
     except Exception as e:
         return {"error": str(e)}
