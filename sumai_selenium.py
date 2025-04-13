@@ -37,6 +37,10 @@ def get_customer_info(url):  # Zapierから送られるURLは使わずOK
             EC.presence_of_element_located((By.TAG_NAME, "table"))  # ページ内にある何かしらの要素で待機
         )
 
+        # ✅ ここが追加された部分！HTMLの中身をログに出力（短く）
+        print("📸 現在のURL:", driver.current_url)
+        print("🧱 HTMLの最初:", driver.page_source[:1000])  # HTML全体は長いので一部だけ
+
         # ロビー写真を撮影（HTML取得）
         return {"html": driver.page_source}
 
