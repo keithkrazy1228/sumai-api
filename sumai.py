@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # ✅ アカウント情報（Tom用）
-ID = "kenou-tomita@a2gjpn.co.jp"
+ID = "kenou-akimoto@a2gjpn.co.jp"
 PASSWORD = "kenouestate2024"
 
 # ✅ セッション & ヘッダー設定
@@ -28,7 +28,7 @@ token = token_tag.get("value")
 # ✅ 3. ログイン用データ構築（ID/PW入り）
 payload = {
     "utf8": "✓",
-    "partner[email]": "kenou-tomita@a2gjpn.co.jp",
+    "partner[email]": "kenou-akimoto@a2gjpn.co.jp",
     "partner[password]": "kenouestate2024",
     "authenticity_token": token,
     "commit": "ログイン"
