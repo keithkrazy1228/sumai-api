@@ -30,17 +30,25 @@ def get_customer_info():
         service = Service("/usr/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
 
-        # ✅ ログ追加①：Selenium起動確認
         print("🟡 Selenium起動OK")
 
-        # ✅ ログ追加②：ログインページへ遷移
+        # ✅ ログインページへアクセス
         driver.get("https://sumai-step.com/partner/login")
         print("➡️ ログインページ到達:", driver.current_url)
         time.sleep(2)
 
-        # ✅ ログインフォーム入力＆送信
+        # ✅ CSRFトークン取得
+        token = driver.find_element(By.NAME, "token").get_attribute("value")
+        print("🛡 CSRFトークン取得:", token)
+
+        # ✅ ログインフォーム入力
         driver.find_element(By.NAME, "partner[email]").send_keys("kenou-akimoto@a2gjpn.co.jp")
         driver.find_element(By.NAME, "partner[password]").send_keys("kenouestate2024")
+
+        # ✅ トークンを念のため再代入（JSで）
+        driver.execute_script(f'document.getElementsByName("token")[0].value = "{token}"')
+
+        # ✅ ログインボタンを押下
         driver.find_element(By.NAME, "commit").click()
         print("🔐 ログインボタン押下")
         time.sleep(2)
@@ -54,7 +62,7 @@ def get_customer_info():
         print("📸 現在のURL:", driver.current_url)
         print("🧱 HTMLの冒頭:", driver.page_source[:1000])
 
-        # ✅ XPathデータ抽出（※まだ失敗する可能性あり）
+        # ✅ XPathで情報抽出（まだ仮のまま）
         name = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[1]/td').text
         address = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[2]/td').text
         tel = driver.find_element(By.XPATH, '//*[@id="conversion_detail"]/div[1]/table/tbody/tr[3]/td').text
