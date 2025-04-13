@@ -17,9 +17,11 @@ token = token_input.get("value") if token_input else ""
 
 # ログイン送信
 payload = {
-    "partner[email]": "kenou-akimoto@a2gjpn.co.jp",
-    "partner[password]": "kenouestate2024",
+    "partner_email": "kenou-akimoto@a2gjpn.co.jp",
+    "password": "kenouestate2024",
     "authenticity_token": token
+}
+
 }
 
 
