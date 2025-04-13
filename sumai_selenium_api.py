@@ -26,13 +26,13 @@ def get_customer_info():
 
         property_id = url.split("/")[-1]
 
-        # ChromeDriver setup for Render
+        # ✅ ChromeDriverのRender対応構成
         options = Options()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
-        options.binary_location = "/usr/bin/google-chrome"
-        service = Service("/usr/bin/chromedriver")
+        options.binary_location = "/usr/bin/chromium-browser"  # ← aptで入るChrome
+        service = Service("/usr/bin/chromedriver")             # ← aptで入るDriver
         driver = webdriver.Chrome(service=service, options=options)
 
         driver.get(url)
